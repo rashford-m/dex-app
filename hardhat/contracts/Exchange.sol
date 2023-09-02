@@ -22,17 +22,17 @@ contract Exchange is ERC20 {
     }
 
     // addLiquidity allows users to add liquidity to the exchange
-    function addLiquidity(uint256 amountOfToken) public payable returns (uint256) {
+    function addLiquidity(
+        uint256 amountOfToken
+    ) public payable returns (uint256) {
         uint256 lpTokensToMint;
         uint256 ethReserveBalance = address(this).balance;
         uint256 tokenReserveBalance = getReserve();
 
         ERC20 token = ERC20(tokenAddress);
 
-         // If the reserve is empty, take any user supplied value for initial liquidity
-         if (tokenReserveBalance == 0) {
-
-
+        // If the reserve is empty, take any user supplied value for initial liquidity
+        if (tokenReserveBalance == 0) {
             // Transfer the token from the user to the exchange
             token.transferFrom(msg.sender, address(this), amountOfToken);
 
@@ -43,16 +43,29 @@ contract Exchange is ERC20 {
             _mint(msg.sender, lpTokensToMint);
 
             return lpTokensToMint;
+        }
 
-         }
+        // If the reserve is not empty, calculate the amount of LP Tokens to be minted
+        uint256 ethReservePriorToFunctionCall = ethReserveBalance - msg.value;
+        uint256 minTokenAmountRequired = (msg.value * tokenReserveBalance) /
+            ethReservePriorToFunctionCall;
 
-          // If the reserve is not empty, calculate the amount of LP Tokens to be minted
-          uint256 ethReservePriorToFunctionCall = ethReserveBalance - msg.value;
-          uint256 minTokenAmountRequired = (msg.value * tokenReserveBalance) / ethReservePriorToFunctionCall;
+        require(
+            amountOfToken >= minTokenAmountRequired,
+            "Insufficient amount of tokens provided"
+        );
 
-          require(amountOfToken >= minTokenAmountRequired, "Insufficient amount of tokens provided");
+        // Transfer the token from the user to the exchange
+        token.transferFrom(msg.sender, address(this), minTokenAmountRequired);
 
-           // Transfer the token from the user to the exchange
-           
+        // Calculate the amount of LP tokens to be minted
+        lpTokensToMint =
+            (totalSupply() * msg.value) /
+            ethReservePriorToFunctionCall;
+
+        // Mint LP tokens to the user
+        _mint(msg.sender, lpTokensToMint);
+
+        return lpTokensToMint;
     }
 }
