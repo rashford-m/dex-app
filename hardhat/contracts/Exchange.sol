@@ -11,7 +11,7 @@ contract Exchange is ERC20 {
 
     // Exchange is inheriting ERC20, because our exchange itself is an ERC-20 contract
     // as it is responsible for minting and issuing LP Tokens
-    constructor(address token) ERC20("ETH TOKEN LP Token", "1pETHTOKEN") {
+    constructor(address token) ERC20("ETH TOKEN LP Token", "lpETHTOKEN") {
         require(token != address(0), "Token address passed is a null address");
         tokenAddress = token;
     }
